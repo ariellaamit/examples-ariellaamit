@@ -20,11 +20,11 @@ The purpose of this assignment is for you to
 
 ## Set up and install the model
 
--   If you haven't already, fork the examples repo to your own account and name the forked repository with a unique name. Create an RStudio project from your fork.
+-   Fork the examples repo to your own account and name the forked repository with a unique name. Create an RStudio project from your fork (sorry - you'll need to do this again even if you've done it already, since I've updated some of the model files).
 
 -   Download and extract the inputs file from Canvas, and save that folder to the model directory of your forked repo.
 
--   Install TransCAD to your computer, using the installation files that are available on Canvas and the serial number that I will provide in class.
+-   Install TransCAD to your computer, using the installation files (you should have received an email with a link) the serial number you can find on Canvas. I have both TransCAD 9 and TransCAD 10 available. For now, use TransCAD 10.
 
 -   Install Python/Anaconda (version 2.3.2 or later). You can use this version: <https://repo.anaconda.com/archive/Anaconda3-2022.10-Windows-x86_64.exe>. You should install it "for all users."
 
@@ -128,7 +128,7 @@ There is one population file for Massachusetts and another for the parts of Rhod
 MA_pop <- here("model",
                "inputs",
                "zonal",
-               "ma_population.csv") |>
+               "ma_population_run97-176_2019_v20240109.csv") |>
   read_csv(show_col_types = FALSE) |>
   mutate(block_id = as.character(block_id))
 
@@ -161,7 +161,7 @@ Let's take a look at the employment file for Massachusetts.
 MA_emp <- here("model",
                "inputs",
                "zonal",
-               "ma_employment.csv") |>
+               "ma_employment_run97-176_2019_v20240109.csv") |>
   read_csv(show_col_types = FALSE) |>
   mutate(block_id = as.character(block_id))
 
@@ -551,7 +551,7 @@ dbGetQuery(base_db, 'SELECT * FROM veh LIMIT 10') |>
   kable()
 ```
 
-This table shows whether each household has zero vehicles (zv), insufficient vehicles (iv), or sufficient vehicles (sv). It also shows the predicted number of vehicles. Since the vehicle availability model ony predicts the vehicle availability category, I'm not sure where the predicted number of vehicles is coming from. We won's use it.
+This table shows whether each household has zero vehicles (zv), insufficient vehicles (iv), or sufficient vehicles (sv). It also shows the predicted number of vehicles. Since the vehicle availability model only predicts the vehicle availability category, I'm not sure where the predicted number of vehicles is coming from. We won't use it.
 
 The changes we made for our alternative scenario would have the greatest effect on vehicle availability for households within Somerville and Medford. So let's take a look at just those.
 
@@ -675,4 +675,14 @@ leaflet(dif_blocks) |>
               highlightOptions = highlightOptions(weight = 3,
                                                   fillOpacity = 0.5),
               label = veh_labels)
+```
+
+You might decide to do your data visualization in ArcGIS or QGIS. If that's you preference, you can write the spatial data to a shapefile:
+
+```{r, warning=FALSE, message=FALSE}
+
+st_write(dif_blocks,
+         here("T1",
+              "dif_blocks.shp"),
+         append = FALSE)
 ```
