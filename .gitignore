@@ -58,3 +58,8 @@ data/NHTS/vehpub.csv
 model/outputs/
 model/inputs/
 
+model/
+T1/
+T1-alt-model.R
+T1-alt-model-v2.R
+T1-alt-model-v3.R
