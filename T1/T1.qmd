@@ -128,7 +128,7 @@ There is one population file for Massachusetts and another for the parts of Rhod
 MA_pop <- here("model",
                "inputs",
                "zonal",
-               "ma_population.csv") |>
+               "ma_population_run97-176_2019_v20240109.csv") |>
   read_csv(show_col_types = FALSE) |>
   mutate(block_id = as.character(block_id))
 
@@ -161,7 +161,7 @@ Let's take a look at the employment file for Massachusetts.
 MA_emp <- here("model",
                "inputs",
                "zonal",
-               "ma_employment.csv") |>
+               "ma_employment_run97-176_2019_v20240109.csv") |>
   read_csv(show_col_types = FALSE) |>
   mutate(block_id = as.character(block_id))
 
@@ -556,13 +556,11 @@ This table shows whether each household has zero vehicles (zv), insufficient veh
 The changes we made for our alternative scenario would have the greatest effect on vehicle availability for households within Somerville and Medford. So let's take a look at just those.
 
 ```{r}
-my_query <- paste0("SELECT * FROM veh WHERE block_id IN (",
-                   str_flatten_comma(somermed_blocks$GEOID10),
-                   ")")
+my_query <- paste0("SELECT * FROM veh")
 
-somermed_vehs_base <- dbGetQuery(base_db, my_query)
+MARINH_vehs_base <- dbGetQuery(base_db, my_query)
 
-head(somermed_vehs_base) |>
+head(MARINH_vehs_base) |>
   kable()
 ```
 
@@ -596,39 +594,33 @@ head(somermed_vehs_alt) |>
 Now we can combine those into a single dataframe and make some comparisons.
 
 ```{r}
-somermed_vehs_base <- somermed_vehs_base |>
+MARINH_vehs_base <- MARINH_vehs_base |>
   rename(veh_suff_base = veh_suff) |>
   select(-num_vehs)
 
-somermed_vehs_alt <- somermed_vehs_alt |>
-  rename(veh_suff_alt = veh_suff) |>
+MA_RINH_veh_recession <- MA_RINH_veh_recession |>
+  rename(veh_suff_recession = veh_suff) |>
   select(-num_vehs)
 
-somermed_vehs_dif <- full_join(somermed_vehs_base, somermed_vehs_alt) |>
+MARINH_vehs_dif <- full_join(MARINH_vehs_base, MA_RINH_veh_recession) |>
   mutate(veh_suff_base = ifelse(is.na(veh_suff_base), "new", veh_suff_base))
 
-somermed_vehs_changed_hh <- somermed_vehs_dif |>
-  mutate(change = case_when(veh_suff_base == "new" & veh_suff_alt == "zv" ~
-                              "New zv",
-                            veh_suff_base == "new" & veh_suff_alt == "iv" ~
-                              "New iv",
-                            veh_suff_base == "new" & veh_suff_alt == "sv" ~
-                              "New sv",
-                            veh_suff_base == "zv" & veh_suff_alt == "iv" ~
+MARINH_vehs_changed_hh <- MARINH_vehs_dif |>
+  mutate(change = case_when(veh_suff_base == "zv" & veh_suff_recession == "iv" ~
                               "gained vehicle",
-                            veh_suff_base == "zv" & veh_suff_alt == "sv" ~
+                            veh_suff_base == "zv" & veh_suff_recession == "sv" ~
                               "gained vehicle",
-                            veh_suff_base == "sv" & veh_suff_alt == "zv" ~
+                            veh_suff_base == "sv" & veh_suff_recession == "zv" ~
                               "lost vehicle",
-                            veh_suff_base == "sv" & veh_suff_alt == "iv" ~
+                            veh_suff_base == "sv" & veh_suff_recession == "iv" ~
                               "lost vehicle",
-                            veh_suff_base == "iv" & veh_suff_alt == "zv" ~
+                            veh_suff_base == "iv" & veh_suff_recession == "zv" ~
                               "lost vehicle",
-                            veh_suff_base == "iv" & veh_suff_alt == "sv" ~
+                            veh_suff_base == "iv" & veh_suff_recession == "sv" ~
                               "gained vehicle",
                             TRUE ~ "no change"))
 
-somermed_vehs_changed_blocks <- somermed_vehs_changed_hh |>
+MARINH_vehs_changed_blocks <- MARINH_vehs_changed_hh |>
   group_by(block_id) |>
   summarise(n_hhs = n(),
             n_new_zv = sum(change == "New zv"),
@@ -643,30 +635,30 @@ somermed_vehs_changed_blocks <- somermed_vehs_changed_hh |>
            n_new_zv > 0) |>
   rename(GEOID10 = block_id)
 
-kable(somermed_vehs_changed_blocks)
+kable(MARINH_vehs_changed_blocks)
 ```
 
 You can see that there are twelve census blocks with any changes to household vehicle ownership. Let's take a look at them on a map.
 
 ```{r}
 dif_blocks <- somermed_blocks |>
-  right_join(somermed_vehs_changed_blocks) 
+  right_join(MARINH_vehs_changed_blocks) 
 
-veh_labels <- paste0(dif_blocks$n_hhs,
+veh_labels <- paste0(MARINH_vehs_changed_blocks$n_hhs,
                         " total households<br/>",
-                        dif_blocks$n_new_zv, 
+                        MARINH_vehs_changed_blocks$n_new_zv, 
                         " new car-free households<br/>",
-                        dif_blocks$n_new_iv,
+                        MARINH_vehs_changed_blocks$n_new_iv,
                         " new car-lite households<br/>",
-                        dif_blocks$n_new_sv,
+                        MARINH_vehs_changed_blocks$n_new_sv,
                          " new full-car households<br/>",
-                        dif_blocks$n_lost_veh,
+                        MARINH_vehs_changed_blocks$n_lost_veh,
                         " households lost a vehicle<br/>",
-                        dif_blocks$n_gained_veh,
+                        MARINH_vehs_changed_blocks$n_gained_veh,
                         " households gained a vehicle") |>
   lapply(htmltools::HTML)
 
-leaflet(dif_blocks) |>
+leaflet(MARINH_vehs_changed_blocks) |>
   addProviderTiles(provider = "CartoDB.Positron") |>
   addPolygons(weight = 2,
               color = "forestgreen",
