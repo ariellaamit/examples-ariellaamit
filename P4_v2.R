@@ -42,7 +42,7 @@ ggplot(missoula) +
           color = "tomato") +
   theme_void()
 
-#### you want main and not aux
+
 
 read_csv("C:/Users/ariel/OneDrive - Harvard University/forecasting-transportation/examples-ariellaamit/p4/mt_od_aux_JT01_2021.csv.gz")
 
