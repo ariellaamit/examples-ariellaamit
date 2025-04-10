@@ -11,7 +11,7 @@ library(r5r)
 library(sf)
 library(leaflet)
 
-#######confused here - find this on github and source it to make the functions in the r script available 
+ 
 
 here("code",
      "grvty_balancing.R") |>
